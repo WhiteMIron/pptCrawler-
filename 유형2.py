@@ -5,7 +5,7 @@ from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
 import re 
 # Type1.점검일지
 
-fileName = "대검 점검일지 영상물중계_2024"
+fileName = "3.대검 점검일지_2024(인쇄시14~32제외할것)"
 def extract_data_from_tables(slide, extracted_data):
     found_words = set()  # 이미 발견된 단어를 기록하기 위한 집합
     for shape in slide.shapes:
@@ -25,9 +25,13 @@ def extract_data_from_tables(slide, extracted_data):
 
 def extract_data_from_presentation(presentation,base_data):
     data_per_slide = []
+    page=0
     for slide in presentation.slides:
+        page+=1
+        print(page)
         extracted_data = copy.copy(base_data)
         extracted_data = extract_data_from_tables(slide,extracted_data)
+        print(extracted_data)
         data_per_slide.append(copy.deepcopy(extracted_data))
     return data_per_slide
 
@@ -43,12 +47,14 @@ def write_to_excel(data_per_slide):
     for slide_data in data_per_slide:
         row = []
         values_list = list(slide_data.values())  
-        for index, header in enumerate(headers):
-            processed_value = replace_special_characters(values_list[index]) 
-            if(header=="Memory(GB)"):
-                 processed_value=mb_to_gb(values_list[index])
-            row.append(processed_value)  
-        sheet.append(row)
+        if(values_list[0]!='') :
+            for index, header in enumerate(headers):
+                processed_value = replace_special_characters(values_list[index]) 
+                if(header=="Memory(GB)"):
+                    processed_value=mb_to_gb(values_list[index])
+                row.append(processed_value)
+            print(row)  
+            sheet.append(row)
 
     workbook.save(f"{fileName}.xlsx")
 def replace_special_characters(text):
@@ -71,7 +77,7 @@ def mb_to_gb(mb_string):
 
 def main():
     presentation = Presentation(f"{fileName}.pptx") 
-    base_data = {"Hostname": '', "Model": '', "Vendor": '', "S/N": '', "OS": '', "CPU model": '', "DISK": '', "MEM": ''}
+    base_data = {"Hostname": '', "Model": '', "Vendor": '', "S/N": '', "OS": '', "CPU": '', "DISK": '', "MEM": ''}
     data_per_slide = extract_data_from_presentation(presentation, base_data)
   
     write_to_excel(data_per_slide)
